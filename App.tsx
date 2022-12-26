@@ -1,6 +1,7 @@
 import {  StatusBar } from 'react-native';
 import { NativeBaseProvider } from 'native-base';
 import { Roboto_400Regular, Roboto_700Bold, useFonts } from '@expo-google-fonts/roboto';
+import { AuthContextProvider } from '@contexts/AuthContexts';
 
 import { THEME} from './src/theme';
 import {Loading} from '@components/loading'
@@ -13,7 +14,10 @@ export default function App() {
       barStyle='light-content'
       backgroundColor='transparent'
       translucent />
-      {fontsloaded ? <Routes/>: <Loading/>}
+      <AuthContextProvider>
+        {fontsloaded ? <Routes/>: <Loading/>}
+      </AuthContextProvider>
+
     </NativeBaseProvider>
 
   );

@@ -92,7 +92,7 @@ export function Profile(){
                 value="gustavocostasouza78@gmail.com"
                 isDisabled/>
 
-                <Heading color='gray.200' fontSize='md' mb={2} alignSelf='flex-start' mt={12} >
+                <Heading color='gray.200' fontFamily='heading' fontSize='md' mb={2} alignSelf='flex-start' mt={12} >
                     Alterar senha
                 </Heading>
 

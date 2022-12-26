@@ -1,17 +1,70 @@
 import { useNavigation } from "@react-navigation/native";
-import { VStack, Image, Center, Text, Heading, ScrollView } from "native-base";
+import { VStack, Image, Center, Text, Heading, ScrollView, useToast } from "native-base";
+import {useForm, Controller} from 'react-hook-form'
+import {yupResolver} from '@hookform/resolvers/yup'
+import * as yup from 'yup'
+import axios from 'axios'
 
+import { AppError } from "@utils/AppError";
+import { api } from '@services/Api'
 import LogoSvg from '@assets/logo.svg'
 import BackgroundImg from '@assets/background.png'
-
 import { Input } from "@components/Input";
 import { Button } from "@components/Button";
+import { Alert } from "react-native";
 
+type FormDataProps = {
+    name: string;
+    email: string;
+    password: string;
+    password_confirm: string;
+}
+
+const signUpSchema = yup.object({
+    name: yup.string().required('Informe o nome'),
+    email: yup.string().required('Informe o email').email("E-mail invalido"),
+    password: yup.string().required('Informe a senha.').min(6, 'A senha deve possuir pelo menos 6 dígitos'),
+    password_confirm: yup.string().required('Confirme a senha').oneOf([yup.ref('password'), null], '    A confirmação da senha não confere.')
+})
 export function SignUp(){
+    const toast = useToast();
+
+    const {control, handleSubmit, formState: {errors} } = useForm<FormDataProps>({
+        resolver: yupResolver(signUpSchema)
+    });
     const navigation = useNavigation();
 
     function handleGoBack(){
         navigation.goBack();
+    }
+
+    async function handleShow({name, email, password} : FormDataProps){
+        try{
+            const response = await api.post('/users', {name, email, password});
+            console.log(response.data);
+        } catch(error){
+            const isAppError = error instanceof AppError;
+            const title = isAppError ? error.message : 'Não foi possível criar a conta, tente novamente mais tarde.'
+
+            toast.show({
+                title,
+                placement: 'top',
+                bg: 'red.500'
+            })
+        }
+
+        /*
+        const response = await fetch('http://192.168.0.108:3333/users', {
+            method:'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({name, email, password})
+        });
+        const data = await response.json();
+        console.log(data);
+        */
     }
     return(
         <ScrollView contentContainerStyle={{flexGrow: 1}} showsVerticalScrollIndicator={false}>
@@ -35,26 +88,70 @@ export function SignUp(){
                 Crie sua conta
             </Heading>
 
-            <Input
-             placeholder="Nome"
+            <Controller
+            control={control}
+            name='name'
+            render={({ field: {onChange, value}}) => (
+                <Input
+                placeholder="Nome"
+                onChangeText={onChange}
+                value={value}
+                errorMessage={errors.name?.message}
+
              />
+            )}/>
 
-            <Input
-             placeholder="E-mail"
-             keyboardType="email-address"
-             autoCapitalize="none"/>
+            <Controller
+            control={control}
+            name='email'
+            render={({ field: {onChange, value}}) => (
+                <Input
+                placeholder="E-mail"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                onChangeText={onChange}
+                value={value}
+                errorMessage={errors.email?.message}
+                />
+            )}/>
 
-            <Input
-             placeholder="Senha"
-             secureTextEntry/>
 
-             <Button title='Criar e acessar'/>
+
+            <Controller
+            control={control}
+            name='password'
+            render={({ field: {onChange, value}}) => (
+                <Input
+                placeholder="Senha"
+                secureTextEntry
+                onChangeText={onChange}
+                value={value}
+                errorMessage={errors.password?.message}/>
+            )}/>
+
+            <Controller
+            control={control}
+            name='password_confirm'
+            render={({ field: {onChange, value}}) => (
+                <Input
+                placeholder="Confirme a senha"
+                secureTextEntry
+                onChangeText={onChange}
+                value={value}
+                onSubmitEditing={handleSubmit(handleShow)}
+                returnKeyType='send'
+                errorMessage={errors.password_confirm?.message}/>
+            )}/>
+
+
+             <Button title='Criar e acessar'
+             onPress={handleSubmit(handleShow)}/>
             </Center>
 
             <Button
             title='Voltar e acessar'
             variant={"outline"}
-            mt={24}
+            mt={12}
             onPress={handleGoBack}/>
 
         </VStack>

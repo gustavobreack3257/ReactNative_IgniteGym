@@ -1,4 +1,6 @@
-import { VStack, Image, Center, Text, Heading, ScrollView } from "native-base";
+import { useState } from "react";
+
+import { VStack, Image, Center, Text, Heading, ScrollView, useToast } from "native-base";
 import {useForm, Controller} from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
@@ -10,6 +12,7 @@ import { AuthNavigatorRoutesProps } from '@routes/auth.routes'
 import { Input } from "@components/Input";
 import { Button } from "@components/Button";
 import { useNavigation } from "@react-navigation/native";
+import { AppError } from "@utils/AppError";
 
 type formValidProps = {
     email: string;
@@ -21,19 +24,37 @@ const signInSchema = yup.object({
     password: yup.string().required('Informe a senha').min(6, 'A senha deve ter pelo menos 6 dígitos')
 })
 export function Signin(){
-    const { signIn } = useAuth()
+    const [IsLoading, setIsLoading] = useState(false)
 
+    const { signIn } = useAuth()
     const {control, handleSubmit, formState: {errors}} = useForm<formValidProps>({
         resolver: yupResolver(signInSchema)
     });
     const navigation = useNavigation<AuthNavigatorRoutesProps>();
 
+    const toast = useToast();
+
     function handleNewAccount(){
         navigation.navigate('signUp');
     }
 
-    async function handleValidAccount({email, password} : formValidProps){
-        await signIn(email, password)
+    async function handleSignIn({email, password} : formValidProps){
+        try {
+            setIsLoading(true)
+            await signIn(email, password)
+        } catch(error){
+            const isAppError = error instanceof AppError
+
+            const title = isAppError ? error.message: 'Não foi possível entrar no app, tente mais tarde'
+            console.log(error)
+            setIsLoading(false)
+
+            toast.show({
+                title,
+                placement: 'top',
+                bgColor: 'red.500'
+            })
+        }
     };
     return(
         <ScrollView contentContainerStyle={{flexGrow: 1}} showsVerticalScrollIndicator={false}>
@@ -86,7 +107,8 @@ export function Signin(){
 
 
              <Button title='Acessar'
-             onPress={handleSubmit(handleValidAccount)}/>
+             onPress={handleSubmit(handleSignIn)}
+             isLoading={IsLoading}/>
             </Center>
 
             <Center>

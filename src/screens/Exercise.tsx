@@ -1,20 +1,55 @@
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import {Feather} from '@expo/vector-icons'
 import { AppNavigatorRoutesProps } from "@routes/app.routes";
 
-import { VStack, Icon, HStack, Heading, Text, Image, Box, ScrollView } from "native-base";
+import { VStack, Icon, HStack, Heading, Text, Image, Box, ScrollView, useToast } from "native-base";
 import { TouchableOpacity } from "react-native";
-
 import Body from '../assets/body.svg'
+import { useEffect, useState } from "react";
+
 import SeriesSvg from '@assets/series.svg'
 import RepetitionsSvg from '@assets/repetitions.svg'
 import { Button } from "@components/Button";
+import { AppError } from "@utils/AppError";
+import { ExerciseDTO } from "@dtos/ExerciseDTO";
+import { api } from "@services/Api";
+
+type routeParamsProps = {
+    exerciseId: string
+}
 export function Exercise(){
+    const [exercise, setExercise] = useState<ExerciseDTO>({} as ExerciseDTO)
     const navigation = useNavigation<AppNavigatorRoutesProps>()
+
+    const route = useRoute();
+    const toast = useToast();
+
+    const { exerciseId } = route.params as routeParamsProps;
 
     function handleGoBack(){
         navigation.goBack()
     }
+
+    async function fetchExerciseDetails(){
+        try {
+            const response = await api.get(`/exercises/${exerciseId}`)
+            setExercise(response.data)
+        } catch (error) {
+            const isAppError = error instanceof AppError;
+            const title = isAppError ? error.message: 'Não foi possível carregar os detalhes dos exercícios'
+
+            toast.show({
+                title,
+                placement: 'top',
+                backgroundColor: 'red.500'
+            })
+        }
+    }
+
+    useEffect(() => {
+        fetchExerciseDetails();
+    }, [exerciseId]);
+
     return(
         <VStack flex={1}>
             <ScrollView>
@@ -25,12 +60,12 @@ export function Exercise(){
 
                 <HStack justifyContent='space-between' mt={4} mb={8} alignItems='center' >
                     <Heading color='gray.100' fontSize='lg' fontFamily='heading' flexShrink={1}>
-                        Puxada frontal
+                        {exercise.name}
                     </Heading>
                 <HStack alignItems='center' >
                     <Body/>
                     <Text color='gray.200' ml={1} textTransform='capitalize'>
-                        Costas
+                        {exercise.group}
                     </Text>
                 </HStack>
                 </HStack>
@@ -40,7 +75,7 @@ export function Exercise(){
                 <Image
                 w='full'
                 h={80}
-                source={{uri: "http://conteudo.imguol.com.br/c/entretenimento/0c/2019/12/03/remada-unilateral-com-halteres-1575402100538_v2_600x600.jpg"}}
+                source={{uri: `${ api.defaults.baseURL }/exercises/demo/${exercise.demo}`}}
                 alt='Nome do exercício'
                 mb={3}
                 resizeMode='cover'

@@ -26,6 +26,7 @@ export function Group({name, isActivity, ...rest}: Props){
         textTransform={"uppercase"}
         fontSize='xl'
         fontWeight='bold'
+        numberOfLines={1}
         >
             {name}
         </Text>

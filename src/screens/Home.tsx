@@ -12,7 +12,7 @@ import { HStack, VStack, FlatList, Heading, Text, useToast } from "native-base";
 import { useCallback, useEffect, useState } from "react";
 export function Home(){
     const [isLoading, setIsLoading] = useState(true)
-    const [groupSelected, setGroupSelected] = useState('Costas')
+    const [groupSelected, setGroupSelected] = useState('antebraço')
     const [groups, setGroups] = useState<string[]>([])
     const [exercesses, setExercise] = useState<ExerciseDTO []>([])
 

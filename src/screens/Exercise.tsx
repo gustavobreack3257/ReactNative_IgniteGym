@@ -19,6 +19,7 @@ type routeParamsProps = {
     exerciseId: string
 }
 export function Exercise(){
+    const [sendingRegister, setSendingRegister] = useState(false)
     const [isLoading, setIsLoading] = useState(true);
     const [exercise, setExercise] = useState<ExerciseDTO>({} as ExerciseDTO)
     const navigation = useNavigation<AppNavigatorRoutesProps>()
@@ -38,6 +39,7 @@ export function Exercise(){
             const response = await api.get(`/exercises/${exerciseId}`)
             setExercise(response.data)
         } catch (error) {
+            console.log('entrou no erro', error)
             const isAppError = error instanceof AppError;
             const title = isAppError ? error.message: 'Não foi possível carregar os detalhes dos exercícios'
 
@@ -51,8 +53,38 @@ export function Exercise(){
         }
     }
 
+    async function handleExerciseHistoryRegister() {
+        try {
+            setSendingRegister(true);
+
+            await api.post('/history', {exercise_id: exerciseId})
+
+            toast.show({
+                title: 'Parabéns!! O execício foi registrado com sucesso no seu histórico.',
+                placement: 'top',
+                backgroundColor: 'green.700'
+            })
+
+            navigation.navigate('history')
+
+        } catch (error) {
+            console.log('entrou no erro', error)
+            const isAppError = error instanceof AppError;
+            const title = isAppError ? error.message: 'Não foi possível carregar os detalhes dos exercícios'
+
+            toast.show({
+                title,
+                placement: 'top',
+                backgroundColor: 'red.500'
+            })
+        } finally{
+            setSendingRegister(false)
+        }
+    }
+
     useEffect(() => {
         fetchExerciseDetails();
+
     }, [exerciseId]);
 
     return(
@@ -82,11 +114,12 @@ export function Exercise(){
                     <Image
                     w='full'
                     h={80}
-                    source={{uri: `${ api.defaults.baseURL }/exercises/demo/${exercise.demo}`}}
+                    source={{uri: `${ api.defaults.baseURL }/exercise/demo/${exercise.demo}`}}
                     alt='Nome do exercício'
                     resizeMode='cover'
-                    rounded='lg'/>
-                    </Box>
+                    rounded='lg'
+                    />
+                </Box>
 
 
                 <Box bg='gray.600' px={4} pb={4}>
@@ -105,7 +138,9 @@ export function Exercise(){
                         </Text>
                     </HStack>
                 </HStack>
-                <Button title='Marcar como realizado'/>
+                <Button title='Marcar como realizado'
+                isLoading={sendingRegister}
+                onPress={handleExerciseHistoryRegister}/>
                 </Box>
                 </VStack>
             }

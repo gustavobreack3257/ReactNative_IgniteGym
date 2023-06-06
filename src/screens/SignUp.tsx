@@ -24,7 +24,7 @@ const signUpSchema = yup.object({
     name: yup.string().required('Informe o nome'),
     email: yup.string().required('Informe o email').email("E-mail invalido"),
     password: yup.string().required('Informe a senha.').min(6, 'A senha deve possuir pelo menos 6 dígitos'),
-    password_confirm: yup.string().required('Confirme a senha').oneOf([yup.ref('password'), null], '    A confirmação da senha não confere.')
+    password_confirm: yup.string().required('Confirme a senha').oneOf([yup.ref('password'), null], ' A confirmação da senha não confere.')
 })
 export function SignUp(){
 

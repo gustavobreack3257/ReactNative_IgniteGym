@@ -9,8 +9,10 @@ import { createContext, ReactNode, useEffect, useState } from "react";
 export type AuthContextDataProps = {
     user: UserDTO
     signIn: (email: string, password: string) => Promise<void>;
+    updatedUserProfile: (updatedUser: UserDTO) => Promise<void>;
     signOut: () => Promise<void>;
     isLoadingStorageData: boolean;
+    refreshedToken: string;
 }
 
 type AuthContextProviderProps = {
@@ -21,6 +23,7 @@ export const AuthContext = createContext<AuthContextDataProps>({} as AuthContext
 export function AuthContextProvider({children}: AuthContextProviderProps) {
 
   const [user, setUser] = useState<UserDTO>({} as UserDTO)
+  const [refreshedToken, setRefreshedToken] = useState('')
   const [isLoadingStorageData, setIsLoadingStorageData] = useState(true);
 
   async function UserAndTokenUpdate(userData: UserDTO, token: string){
@@ -77,6 +80,16 @@ export function AuthContextProvider({children}: AuthContextProviderProps) {
 
   }
 
+  async function updatedUserProfile(updatedUser: UserDTO){
+    try {
+      setUser(updatedUser)
+
+      await storageUserSave(updatedUser)
+    } catch (error) {
+      throw error;
+    }
+  }
+
   async function loadUserData() {
     try{
       setIsLoadingStorageData(true);
@@ -91,20 +104,33 @@ export function AuthContextProvider({children}: AuthContextProviderProps) {
     throw error
   } finally{
     setIsLoadingStorageData(false)
-  }
-    }
+  };
+    };
 
 
+  function refreshTokenUpdate(newToken: string){
+    setRefreshedToken(newToken);
+  };
   useEffect(() => {
     loadUserData();
-  }, [])
+  }, []);
+
+  useEffect(() => {
+    const subscribe = api.registerInterceptTokenManager({signOut, refreshTokenUpdate });
+
+    return () => {
+      subscribe()
+    }
+  }, [signOut])
 
     return(
         <AuthContext.Provider value={{
         user,
         signIn,
+        updatedUserProfile,
         signOut,
-        isLoadingStorageData}}>
+        isLoadingStorageData,
+        refreshedToken}}>
             {children}
           </AuthContext.Provider>
     )
